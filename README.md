@@ -180,13 +180,46 @@ layer-wise, as shown in the supplemental materials, run with the
 ipython -- bin/visualize_spn.py bmnist --model models/bmnist/bmnist_spn_50/best.bmnist.model --scope lmap
 ```
 ## Extracting Embeddings
+Given a dataset split into train, validation and test, the embedding
+generation functions will produce the new train, validation and test
+splits according to a model and some filtering criterion. In addition
+to that, for SPN models, a feature file map will be generated,
+comprising information about the node used to generate each feature.
 
 ### Extracting SPN embeddings
+To extract the embeddings for a dataset from an SPN model one can use
+the `spn_repr_data.py` script. He will need to specify some string
+matching rules to identiy the dataset splits with `--train-ext`,
+`--valid-ext`, `--test-ext` and the directory where to look as the
+first parameter (e.g. `data/`).
+The SPN model path is specified with the option `--model` and the new
+representation name will be composed using the `--suffix` parameter
+value.
+To specify how to extract the embeddings, one has to set two options:
+`--ret-func` which determines which values to extract from a node (to
+get the node output value in the log domain use `"var-log-val"`), and
+`--filter-func` that indicates which nodes to consider to generate the
+embeddings (set it to `"all"` to get all nodes with scope length
+greater than 1, as in the experiments).
+
+Here is an example usage:
 ```
 ipython -- bin/spn_repr_data.py data/ --train-ext ocr_letters.ts.data --valid-ext ocr_letters.valid.data --test-ext ocr_letters.test.data --model models/ocr_letters/ocr_letters_spn_100/best.ocr_letters.model -o /media/valerio/formalità/repr/ocr_letters/ --ret-func "var-log-val" --filter-func "all" --suffix "100-all-log-val" --no-ext --no-mpe --fmt float
 ```
 
+To extract the embeddings for the MPE tree path visualization, run
+this other version:
+```
+ipython -- bin/spn_repr_data.py data/ --train-ext bmnist.ts.data --valid-ext bmnist.valid.data --test-ext bmnist.test.data --model models/bmnist/bmnist_spn_500/best.bmnist.model -o /media/valerio/formalità/repr/bmnist/mpe/ --ret-func "max-var" --filter-func "hid-var" --suffix "500-mpe-hid-var" --no-ext --fmt int
+```
+which uses only the max child branches for each hidden r.v. (specified
+with `--filter-func "hid-var"`) and sets them to 0 or 1 (specified with `--ret-func "max-var"`).
+
+
 #### Filtering SPN embeddings
+One can extract embeddings comprising all (non-leaf) nodes, then
+filter them without running again `spn_repr_data.py`. To do so, use
+the `filter_feature_repr.py` script.
 ```
 ipython -- bin/filter_feature_repr.py /media/valerio/formalità/repr/caltech101/all/ -r 50-all-log-val.caltech101 --train-ext ts.data --valid-ext valid.data --test-ext test.data --info /media/valerio/formalità/repr/caltech101/all/50-all-log-val.caltech101.features.info -o /media/valerio/formalità/repr/caltech101/non-leaf/ --suffix 50-non-leaf-log-val-caltech101 --save-text --nodes sum prod
 ```
