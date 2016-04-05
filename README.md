@@ -182,9 +182,12 @@ ipython -- bin/visualize_spn.py bmnist --model models/bmnist/bmnist_spn_50/best.
 ## Extracting Embeddings
 Given a dataset split into train, validation and test, the embedding
 generation functions will produce the new train, validation and test
-splits according to a model and some filtering criterion. In addition
-to that, for SPN models, a feature file map will be generated,
+splits according to a model and some filtering criterion.
+The output splits are generally in a pickle file, but can be saved in
+the same format of the textual datasets with the `--save-txt` option.
+In addition to that, for SPN models, a feature file map will be generated,
 comprising information about the node used to generate each feature.
+
 
 ### Extracting SPN embeddings
 To extract the embeddings for a dataset from an SPN model one can use
@@ -199,18 +202,17 @@ To specify how to extract the embeddings, one has to set two options:
 `--ret-func` which determines which values to extract from a node (to
 get the node output value in the log domain use `"var-log-val"`), and
 `--filter-func` that indicates which nodes to consider to generate the
-embeddings (set it to `"all"` to get all nodes with scope length
-greater than 1, as in the experiments).
+embeddings (set it to `"all"` to get all nodes in a network).
 
 Here is an example usage:
 ```
-ipython -- bin/spn_repr_data.py data/ --train-ext ocr_letters.ts.data --valid-ext ocr_letters.valid.data --test-ext ocr_letters.test.data --model models/ocr_letters/ocr_letters_spn_100/best.ocr_letters.model -o /media/valerio/formalità/repr/ocr_letters/ --ret-func "var-log-val" --filter-func "all" --suffix "100-all-log-val" --no-ext --no-mpe --fmt float
+ipython -- bin/spn_repr_data.py data/ --train-ext ocr_letters.ts.data --valid-ext ocr_letters.valid.data --test-ext ocr_letters.test.data --model models/ocr_letters/ocr_letters_spn_100/best.ocr_letters.model -o repr/ocr_letters/ --ret-func "var-log-val" --filter-func "all" --suffix "100-all-log-val" --no-ext --no-mpe --fmt float
 ```
 
 To extract the embeddings for the MPE tree path visualization, run
 this other version:
 ```
-ipython -- bin/spn_repr_data.py data/ --train-ext bmnist.ts.data --valid-ext bmnist.valid.data --test-ext bmnist.test.data --model models/bmnist/bmnist_spn_500/best.bmnist.model -o /media/valerio/formalità/repr/bmnist/mpe/ --ret-func "max-var" --filter-func "hid-var" --suffix "500-mpe-hid-var" --no-ext --fmt int
+ipython -- bin/spn_repr_data.py data/ --train-ext bmnist.ts.data --valid-ext bmnist.valid.data --test-ext bmnist.test.data --model models/bmnist/bmnist_spn_500/best.bmnist.model -o repr/bmnist/mpe/ --ret-func "max-var" --filter-func "hid-var" --suffix "500-mpe-hid-var" --no-ext --fmt int
 ```
 which uses only the max child branches for each hidden r.v. (specified
 with `--filter-func "hid-var"`) and sets them to 0 or 1 (specified with `--ret-func "max-var"`).
@@ -218,10 +220,22 @@ with `--filter-func "hid-var"`) and sets them to 0 or 1 (specified with `--ret-f
 
 #### Filtering SPN embeddings
 One can extract embeddings comprising all (non-leaf) nodes, then
-filter them without running again `spn_repr_data.py`. To do so, use
-the `filter_feature_repr.py` script.
+filter them by type or scope length  without running again `spn_repr_data.py`. To do so, use
+the `filter_feature_repr.py` script. The command takes similar
+parameters as `spn_repr_data.py`, but it also needs the path to the
+feature map file the latter generated (to be specified with the
+`--info` option). 
+
+By specifying the `--nodes` option, one can filter them by type
+(writing `sum` and `prod` together gets all non leaf nodes). For example:
 ```
-ipython -- bin/filter_feature_repr.py /media/valerio/formalità/repr/caltech101/all/ -r 50-all-log-val.caltech101 --train-ext ts.data --valid-ext valid.data --test-ext test.data --info /media/valerio/formalità/repr/caltech101/all/50-all-log-val.caltech101.features.info -o /media/valerio/formalità/repr/caltech101/non-leaf/ --suffix 50-non-leaf-log-val-caltech101 --save-text --nodes sum prod
+ipython -- bin/filter_feature_repr.py repr/caltech101/all/ -r 50-all-log-val.caltech101 --train-ext ts.data --valid-ext valid.data --test-ext test.data --info repr/caltech101/all/50-all-log-val.caltech101.features.info -o repr/caltech101/non-leaf/ --suffix 50-non-leaf-log-val-caltech101 --save-text --nodes sum prod
+```
+
+Using `--scopes m n` allows to filter all nodes with scope length range $m\geq x
+\le n$. For instance in a command like:
+```
+ipython -- bin/filter_feature_repr.py repr/caltech101/all/ -r 50-all-log-val.caltech101 --train-ext ts.data --valid-ext valid.data --test-ext test.data --info repr/caltech101/all/50-all-log-val.caltech101.features.info -o repr/caltech101/scopes/ --suffix 50-2-3-scopes-log-val-caltech101 --save-text --scopes 2 4
 ```
 
 ### Extracting RBM embeddings
@@ -256,8 +270,10 @@ invoke the `spn_repr_data.py` and `libra_repr_data` by specifying the
 `--features` option in a command as
 follows:
 ```
-ipython -- bin/libra_repr_data.py data/ --train-ext ocr_letters.ts.data --valid-ext ocr_letters.valid.data --test-ext ocr_letters.test.data --model exp/mtlearn/ocr_letters_2016-03-01_07-53-35/models/ocr_letters_2_0.ac  -o repr/rect/ocr_letters/ --suffix "3-mt-1000-2-2-7-7-rect" --no-ext --fmt float --features features/ocr_letters/1000-2-2-7-7-rand-rect.ocr_letters.features --acquery-path "/root/Desktop/libra_exp/bin/acquery"
+ipython -- bin/libra_repr_data.py data/ --train-ext ocr_letters.ts.data --valid-ext ocr_letters.valid.data --test-ext ocr_letters.test.data --model exp/mtlearn/ocr_letters_2016-03-01_07-53-35/models/ocr_letters_2_0.ac  -o repr/rect/ocr_letters/ --suffix "3-mt-1000-2-2-7-7-rect" --no-ext --fmt float --features features/ocr_letters/1000-2-2-7-7-rand-rect.ocr_letters.features --acquery-path "/root/Desktop/libra-tk-1.0.1/bin/acquery"
 ```
+in which the `--acquery-path` option specifies the path to the
+`acquery` bin file in your libra toolkit installation
 
 #### Splitting and merging features masks
 The evaluation of the random queries can be highly time consuming. For
@@ -281,9 +297,24 @@ Obtaining a single pickle containing the merged splits for training,
 validation and test.
 
 #### Running on the GPU
+The evaluation of 1000 feature queries for large SPN models (like
+SPN-II/III on OCR and BMN) can take too long, in practice. To speed
+things up we leverage our implementation in Theano, using a GPU with
+CUDA enabled.
+
+To do so, one has to specify the `--theano` option, whose value
+determines the batch size during the network evaluation. Moreover, one
+has to properly set some Theano environmental vars to be sure to run
+on the GPU: `THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32`.
+See this example:
 ```
-THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 ipython -- bin/spn_repr_data.py data/ --train-ext caltech101.ts.data --valid-ext caltech101.valid.data --test-ext caltech101.test.data --model models/caltech101/caltech101_spn_500/best.caltech101.model -o /media/valerio/formalità/repr/rect/caltech101/ --suffix "500-spn-1000-2-2-10-10-rect" --no-ext --no-mpe --fmt float --features features/caltech101/1000-2-2-10-10-rand-rect.caltech101.features.0.99 --theano 100 --opt-unique --max-nodes-layer 50
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 ipython -- bin/spn_repr_data.py data/ --train-ext caltech101.ts.data --valid-ext caltech101.valid.data --test-ext caltech101.test.data --model models/caltech101/caltech101_spn_500/best.caltech101.model -o repr/rect/caltech101/ --suffix "500-spn-1000-2-2-10-10-rect" --no-ext --no-mpe --fmt float --features features/caltech101/1000-2-2-10-10-rand-rect.caltech101.features.0.99 --theano 100 --opt-unique --max-nodes-layer 50
 ```
+
+With `--max-nodes-layer` one can limit the number of nodes to put in
+each layer in the layered representation of an SPN. Smaller values
+will let the architecture be stored on  GPUs with less memory. On the
+other hand, they will make Theano compilation process much longer.
 
 ## Evaluate Embeddings
 
