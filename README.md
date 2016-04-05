@@ -53,15 +53,17 @@ tar -zxvf bmnist.data.tgz
 
 ## Learning Models
 In the `models` dir the SPN and MT models employed in the
-experiments are provided as a compressed archive: `models.tar.gz`.
+experiments are provided as a compressed archives: `<dataset-name>.models.tbz2`.
 To uncompress them:
 ```
 cd models
-tar -zxvf models.tar.gz 
+tar -jxvf bmnist.models.tbz2
+tar -jxvf caltech101.models.tbz2
+tar -jxvf ocr_letters.models.tbz2
 ```
 Three directories will be created, one for each dataset.
 
-The following sections will list the commands to learn them back from data.
+The following sub sections will list the commands to learn them back from data.
 
 ### Learning SPNs
 To learn an SPN structure with `LearnSPN-b` one can use the script
@@ -88,7 +90,7 @@ through the parameter `-e`.
 For instance to learn the MT-I model, comprising 3 mixtures
 components, one shall exectute:
 ```
-ipython --  bin/mtlearn_exp.py ocr_letters -n 3 3 -e /root/Desktop/libra_exp/bin/ -o exp/mtlearn/ -i 1
+ipython --  bin/mtlearn_exp.py ocr_letters -n 3 3 -e /root/Desktop/libra-tk-1.0.1/bin/ -o exp/mtlearn/ -i 1
 ```
 The model output will be stored in the dir specified by `-o`. The
 model path that later will be used to extract the embeddings shall
@@ -171,6 +173,12 @@ To plot the scope length distribution of a learned SPN model, use the
 ipython -- bin/visualize_spn.py caltech101 --model models/caltech101/caltech101_spn_100/best.caltech101.model --scope hist --ylim 200000 --xlim -10 785
 ```
 
+To visualize the bar graphs for the scope length distributions
+layer-wise, as shown in the supplemental materials, run with the
+`--scope lmap` option, as in:
+```
+ipython -- bin/visualize_spn.py bmnist --model models/bmnist/bmnist_spn_50/best.bmnist.model --scope lmap
+```
 ## Extracting Embeddings
 
 ### Extracting SPN embeddings
