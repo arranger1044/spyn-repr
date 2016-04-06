@@ -10,6 +10,7 @@ numpy 1.10.4
 scipy 0.16.1
 sklearn 0.17
 pandas 0.15.2
+numba 0.19.2
 theano 0.8.0
 matplotlib 1.5.1
 seaborn 0.6.0
